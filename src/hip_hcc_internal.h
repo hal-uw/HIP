@@ -37,6 +37,8 @@ THE SOFTWARE.
 #endif
 
 #define USE_IPC 1
+/* if set, then assume dGPU and do all appropriate copies, else assume APU */
+//#define DGPU
 
 //---
 // Environment variables:

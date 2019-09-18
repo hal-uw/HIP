@@ -103,9 +103,9 @@ int sharePtr(void *ptr, ihipCtx_t *ctx, bool shareWithAll, unsigned hipFlags)
 // Returns null-ptr if a memory error occurs (either allocation or sharing)
 void * allocAndSharePtr(const char *msg, size_t sizeBytes, ihipCtx_t *ctx, bool shareWithAll, unsigned amFlags, unsigned hipFlags, size_t alignment)
 {
-
     void *ptr = nullptr;
 
+#ifdef DGPU
     auto device = ctx->getWriteableDevice();
 
 #if (__hcc_workweek__ >= 17332)
@@ -130,6 +130,15 @@ void * allocAndSharePtr(const char *msg, size_t sizeBytes, ihipCtx_t *ctx, bool 
             ptr = nullptr;
         }
     }
+#else // APU
+    // cache-line aligned malloc
+    std::cout << "Cache-line aligned malloc\n";
+    if (posix_memalign(&ptr, 64, sizeBytes)) {
+      free(ptr);
+      std::cerr << "ERROR: posix_memalign failed\n";
+      exit(-1);
+    }
+#endif // #ifdef DGPU
 
     return ptr;
 }
@@ -253,6 +262,12 @@ hipError_t hipMalloc(void** ptr, size_t sizeBytes)
 
     } 
 
+#ifndef DGPU
+    if (hip_status != hipSuccess) {
+        std::cerr << "APU hipMalloc failed: " << ihipLogStatus(hip_status)
+                  << std::endl;
+    }
+#endif
 
     return ihipLogStatus(hip_status);
 }
@@ -857,6 +872,9 @@ hipError_t hipMemcpy(void* dst, const void* src, size_t sizeBytes, hipMemcpyKind
     }
     catch (ihipException ex) {
         e = ex._code;
+#ifndef DGPU
+        std::cerr << "APU memcpy failed: " << ihipLogStatus(e) << std::endl;
+#endif
     }
 
     return ihipLogStatus(e);
@@ -1161,6 +1179,7 @@ ihipMemsetKernel(hipStream_t stream,
     T * ptr, T val, size_t sizeBytes,
     hc::completion_future *cf)
 {
+#ifdef DGPU
     int wg = std::min((unsigned)8, stream->getDevice()->_computeUnits);
     const int threads_per_wg = 256;
 
@@ -1188,6 +1207,10 @@ ihipMemsetKernel(hipStream_t stream,
             ptr[i] = val;
         }
     });
+#else // APU
+    // on APU just set the values on host with memset
+    memset(ptr, val, sizeBytes);
+#endif // #ifdef DGPU
 
 }
 
@@ -1463,12 +1486,12 @@ hipError_t hipMemPtrGetInfo(void *ptr, size_t *size)
 hipError_t hipFree(void* ptr)
 {
     HIP_INIT_SPECIAL_API((TRACE_MEM), ptr);
-
     hipError_t hipStatus = hipErrorInvalidDevicePointer;
 
     // Synchronize to ensure all work has finished.
     ihipGetTlsDefaultCtx()->locked_waitAllStreams(); // ignores non-blocking streams, this waits for all activity to finish.
 
+#ifdef DGPU
     if (ptr) {
         hc::accelerator acc;
 #if (__hcc_workweek__ >= 17332)
@@ -1487,6 +1510,13 @@ hipError_t hipFree(void* ptr)
         // free NULL pointer succeeds and is common technique to initialize runtime
         hipStatus = hipSuccess;
     }
+#else // APU
+    // on APU, just do free on host
+    if (ptr) {
+        free(ptr);
+    }
+    hipStatus = hipSuccess;
+#endif // #ifdef DGPU
 
     return ihipLogStatus(hipStatus);
 }
@@ -1501,6 +1531,7 @@ hipError_t hipHostFree(void* ptr)
 
 
     hipError_t hipStatus = hipErrorInvalidValue;
+#ifdef DGPU
     if (ptr) {
         hc::accelerator acc;
 #if (__hcc_workweek__ >= 17332)
@@ -1519,6 +1550,13 @@ hipError_t hipHostFree(void* ptr)
         // free NULL pointer succeeds and is common technique to initialize runtime
         hipStatus = hipSuccess;
     }
+#else // APU
+    // on APU, just do free on host
+    if (ptr) {
+        free(ptr);
+    }
+    hipStatus = hipSuccess;
+#endif // #ifdef DGPU
 
     return ihipLogStatus(hipStatus);
 };
@@ -1536,6 +1574,7 @@ hipError_t hipFreeArray(hipArray* array)
 
     hipError_t hipStatus = hipErrorInvalidDevicePointer;
 
+#ifdef DGPU
     // Synchronize to ensure all work has finished.
     ihipGetTlsDefaultCtx()->locked_waitAllStreams(); // ignores non-blocking streams, this waits for all activity to finish.
 
@@ -1554,6 +1593,13 @@ hipError_t hipFreeArray(hipArray* array)
             }
         }
     }
+#else // APU
+    // on APU, just do free on host
+    if (array != NULL) {
+        free(array);
+    }
+    hipStatus = hipSuccess;
+#endif // #ifdef DGPU
 
     return ihipLogStatus(hipStatus);
 }

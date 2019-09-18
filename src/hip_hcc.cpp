@@ -1891,6 +1891,7 @@ bool getTailoredPtrInfo(hc::AmPointerInfo *ptrInfo, const void * ptr, size_t siz
 // TODO - remove kind parm from here or use it below?
 void ihipStream_t::locked_copySync(void* dst, const void* src, size_t sizeBytes, unsigned kind, bool resolveOn)
 {
+#ifdef DGPU
     ihipCtx_t *ctx = this->getCtx();
     const ihipDevice_t *device = ctx->getDevice();
 
@@ -1937,6 +1938,10 @@ void ihipStream_t::locked_copySync(void* dst, const void* src, size_t sizeBytes,
 
         crit->_av.copy_ext(src, dst, sizeBytes, hcCopyDir, srcPtrInfo, dstPtrInfo, copyDevice ? &copyDevice->getDevice()->_acc : nullptr, forceUnpinnedCopy);
     }
+#else // APU
+    // if using an APU, do a copy on the host to mimic the device memcpy
+    memcpy(dst, src, sizeBytes);
+#endif // #ifdef DGPU
 }
 
 void ihipStream_t::addSymbolPtrToTracker(hc::accelerator& acc, void* ptr, size_t sizeBytes) {
@@ -2004,7 +2009,7 @@ void ihipStream_t::lockedSymbolCopyAsync(hc::accelerator &acc, void* dst, void* 
 
 void ihipStream_t::locked_copyAsync(void* dst, const void* src, size_t sizeBytes, unsigned kind)
 {
-
+#ifdef DGPU
     const ihipCtx_t *ctx = this->getCtx();
 
     if ((ctx == nullptr) || (ctx->getDevice() == nullptr)) {
@@ -2097,6 +2102,10 @@ void ihipStream_t::locked_copyAsync(void* dst, const void* src, size_t sizeBytes
             crit->_av.copy_ext(src, dst, sizeBytes, hcCopyDir, srcPtrInfo, dstPtrInfo, copyDevice ? &copyDevice->getDevice()->_acc : nullptr, forceUnpinnedCopy);
         }
     }
+#else // APU
+    // just do a copy if using an APU
+    memcpy(dst, src, sizeBytes);
+#endif // #ifdef DGPU
 }
 
 
