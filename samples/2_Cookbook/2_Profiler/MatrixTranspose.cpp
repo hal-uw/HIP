@@ -36,6 +36,8 @@ THE SOFTWARE.
 
 #define ITERATIONS 10
 
+//#define DGPU
+
 // Cmdline parms to control start and stop triggers
 int startTriggerIteration=-1;
 int stopTriggerIteration=-1;
@@ -91,7 +93,7 @@ void runGPU(float *Matrix, float *TransposeMatrix,
     hipEventCreate(&start);
     hipEventCreate(&stop);
 
-
+#ifdef DGPU
     // Record the start event
     hipEventRecord(start, NULL);
 
@@ -105,16 +107,26 @@ void runGPU(float *Matrix, float *TransposeMatrix,
     hipEventElapsedTime(&eventMs, start, stop);
 
     printf ("hipMemcpyHostToDevice time taken  = %6.3fms\n", eventMs);
+#endif
 
     // Record the start event
     hipEventRecord(start, NULL);
 
+#ifdef DGPU
     // Lauching kernel from host
     hipLaunchKernel(matrixTranspose,
                     dim3(WIDTH/THREADS_PER_BLOCK_X, WIDTH/THREADS_PER_BLOCK_Y),
                     dim3(THREADS_PER_BLOCK_X, THREADS_PER_BLOCK_Y),
                     0, 0,
                     gpuTransposeMatrix , gpuMatrix, WIDTH);
+#else
+    // Lauching kernel from host
+    hipLaunchKernel(matrixTranspose,
+                    dim3(WIDTH/THREADS_PER_BLOCK_X, WIDTH/THREADS_PER_BLOCK_Y),
+                    dim3(THREADS_PER_BLOCK_X, THREADS_PER_BLOCK_Y),
+                    0, 0,
+                    TransposeMatrix , Matrix, WIDTH);
+#endif
 
     // Record the stop event
     hipEventRecord(stop, NULL);
@@ -123,6 +135,7 @@ void runGPU(float *Matrix, float *TransposeMatrix,
 
     printf ("kernel Execution time             = %6.3fms\n", eventMs);
 
+#ifdef DGPU
     // Record the start event
     hipEventRecord(start, NULL);
 
@@ -136,6 +149,7 @@ void runGPU(float *Matrix, float *TransposeMatrix,
     hipEventElapsedTime(&eventMs, start, stop);
 
     printf ("hipMemcpyDeviceToHost time taken  = %6.3fms\n", eventMs);
+#endif
   }
 };
 
@@ -183,9 +197,11 @@ int main(int argc, char *argv[]) {
       }
 
 
+#ifdef DGPU
       // allocate the memory on the device side
       hipMalloc((void**)&gpuMatrix, NUM * sizeof(float));
       hipMalloc((void**)&gpuTransposeMatrix, NUM * sizeof(float));
+#endif
 
       // FYI, the scoped-marker will be destroyed here when the scope exits, and will record its "end" timestamp.
   }
@@ -217,9 +233,11 @@ int main(int argc, char *argv[]) {
     printf ("PASSED!\n");
   }
 
+#ifdef DGPU
   //free the resources on device side
   hipFree(gpuMatrix);
   hipFree(gpuTransposeMatrix);
+#endif
 
   //free the resources on host side
   free(Matrix);
