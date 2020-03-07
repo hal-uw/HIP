@@ -34,6 +34,8 @@ THE SOFTWARE.
 #define THREADS_PER_BLOCK_Y  4
 #define THREADS_PER_BLOCK_Z  1
 
+//#define DGPU
+
 // Device (Kernel) function, it must be void
 // hipLaunchParm provides the execution configuration
 __global__ void matrixTranspose(hipLaunchParm lp,
@@ -69,8 +71,10 @@ int main() {
   float* TransposeMatrix;
   float* cpuTransposeMatrix;
 
+#ifdef DGPU
   float* gpuMatrix;
   float* gpuTransposeMatrix;
+#endif
 
   hipDeviceProp_t devProp;
   hipGetDeviceProperties(&devProp, 0);
@@ -89,6 +93,7 @@ int main() {
     Matrix[i] = (float)i*10.0f;
   }
 
+#ifdef DGPU
   // allocate the memory on the device side
   hipMalloc((void**)&gpuMatrix, NUM * sizeof(float));
   hipMalloc((void**)&gpuTransposeMatrix, NUM * sizeof(float));
@@ -105,6 +110,14 @@ int main() {
 
   // Memory transfer from device to host
   hipMemcpy(TransposeMatrix, gpuTransposeMatrix, NUM*sizeof(float), hipMemcpyDeviceToHost);
+#else // APU
+  // Lauching kernel from host
+  hipLaunchKernel(matrixTranspose,
+                  dim3(1),
+                  dim3(THREADS_PER_BLOCK_X , THREADS_PER_BLOCK_Y),
+                  0, 0,
+                  TransposeMatrix , Matrix, WIDTH);
+#endif
 
   // CPU MatrixTranspose computation
   matrixTransposeCPUReference(cpuTransposeMatrix, Matrix, WIDTH);
@@ -124,9 +137,11 @@ int main() {
     printf ("PASSED!\n");
   }
 
+#ifdef DGPU
   //free the resources on device side
   hipFree(gpuMatrix);
   hipFree(gpuTransposeMatrix);
+#endif
 
   //free the resources on host side
   free(Matrix);

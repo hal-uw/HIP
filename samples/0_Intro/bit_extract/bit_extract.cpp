@@ -27,6 +27,7 @@ THE SOFTWARE.
 #include <hc.hpp>
 #endif
 
+//#define DGPU
 
 #define CHECK(cmd) \
 {\
@@ -55,7 +56,9 @@ bit_extract_kernel(hipLaunchParm lp, uint32_t *C_d, const uint32_t *A_d, size_t 
 
 int main(int argc, char *argv[])
 {
+#ifdef DGPU
     uint32_t *A_d, *C_d;
+#endif
     uint32_t *A_h, *C_h;
     size_t N = 1000000;
     size_t Nbytes = N * sizeof(uint32_t);
@@ -78,20 +81,26 @@ int main(int argc, char *argv[])
         A_h[i] = i;
     }
 
+#ifdef DGPU
     printf ("info: allocate device mem (%6.2f MB)\n", 2*Nbytes/1024.0/1024.0);
     CHECK(hipMalloc(&A_d, Nbytes));
     CHECK(hipMalloc(&C_d, Nbytes));
 
     printf ("info: copy Host2Device\n");
     CHECK ( hipMemcpy(A_d, A_h, Nbytes, hipMemcpyHostToDevice));
+#endif
 
     printf ("info: launch 'bit_extract_kernel' \n");
     const unsigned blocks = 512;
     const unsigned threadsPerBlock = 256;
+#ifdef DGPU
     hipLaunchKernel(bit_extract_kernel, dim3(blocks), dim3(threadsPerBlock), 0, 0,   C_d, A_d, N);
 
     printf ("info: copy Device2Host\n");
     CHECK ( hipMemcpy(C_h, C_d, Nbytes, hipMemcpyDeviceToHost));
+#else // APU
+    hipLaunchKernel(bit_extract_kernel, dim3(blocks), dim3(threadsPerBlock), 0, 0,   C_h, A_h, N);
+#endif
 
     printf ("info: check result\n");
     for (size_t i=0; i<N; i++)  {
