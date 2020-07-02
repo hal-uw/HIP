@@ -324,10 +324,17 @@ void ihipStream_t::wait(LockedAccessor_StreamCrit_t &crit)
 //Wait for all kernel and data copy commands in this stream to complete.
 void ihipStream_t::locked_wait()
 {
-    LockedAccessor_StreamCrit_t crit(_criticalData);
+    hc::completion_future marker;
+    {
+        LockedAccessor_StreamCrit_t crit(_criticalData);
 
-    wait(crit);
+        if (crit->_av.get_is_empty())
+            return;
 
+        marker = crit->_av.create_marker(hc::no_scope);
+
+    }
+    marker.wait(waitMode());
 };
 
 // Causes current stream to wait for specified event to complete:
