@@ -168,11 +168,11 @@ hipError_t hipPointerGetAttributes(hipPointerAttribute_t *attributes, const void
         e = hipErrorInvalidValue;
     } else {
         hc::accelerator acc;
-#if (__hcc_workweek__ >= 17332)
-        hc::AmPointerInfo amPointerInfo(NULL, NULL, NULL, 0, acc, 0, 0);
-#else
+//#if (__hcc_workweek__ >= 17332)
+//        hc::AmPointerInfo amPointerInfo(NULL, NULL, NULL, 0, acc, 0, 0);
+//#else
         hc::AmPointerInfo amPointerInfo(NULL, NULL, 0, acc, 0, 0);
-#endif
+//#endif
         am_status_t status = hc::am_memtracker_getinfo(&amPointerInfo, ptr);
         if (status == AM_SUCCESS) {
 
@@ -219,11 +219,11 @@ hipError_t hipHostGetDevicePointer(void **devicePointer, void *hostPointer, unsi
     } else {
         hc::accelerator acc;
         *devicePointer = NULL;
-#if (__hcc_workweek__ >= 17332)
-        hc::AmPointerInfo amPointerInfo(NULL, NULL, NULL, 0, acc, 0, 0);
-#else
+//#if (__hcc_workweek__ >= 17332)
+//        hc::AmPointerInfo amPointerInfo(NULL, NULL, NULL, 0, acc, 0, 0);
+//#else
         hc::AmPointerInfo amPointerInfo(NULL, NULL, 0, acc, 0, 0);
-#endif
+//#endif
         am_status_t status = hc::am_memtracker_getinfo(&amPointerInfo, hostPointer);
         if (status == AM_SUCCESS) {
             *devicePointer = static_cast<char*>(amPointerInfo._devicePointer) + (static_cast<char*>(hostPointer) - static_cast<char*>(amPointerInfo._hostPointer)) ;
@@ -617,11 +617,11 @@ hipError_t hipHostGetFlags(unsigned int* flagsPtr, void* hostPtr)
     hipError_t hip_status = hipSuccess;
 
     hc::accelerator acc;
-#if (__hcc_workweek__ >= 17332)
-    hc::AmPointerInfo amPointerInfo(NULL, NULL, NULL, 0, acc, 0, 0);
-#else
+//#if (__hcc_workweek__ >= 17332)
+//    hc::AmPointerInfo amPointerInfo(NULL, NULL, NULL, 0, acc, 0, 0);
+//#else
     hc::AmPointerInfo amPointerInfo(NULL, NULL, 0, acc, 0, 0);
-#endif
+//#endif
     am_status_t status = hc::am_memtracker_getinfo(&amPointerInfo, hostPtr);
     if(status == AM_SUCCESS){
         *flagsPtr = amPointerInfo._appAllocationFlags;
@@ -652,11 +652,11 @@ hipError_t hipHostRegister(void *hostPtr, size_t sizeBytes, unsigned int flags)
     }
 
     hc::accelerator acc;
-#if (__hcc_workweek__ >= 17332)
-    hc::AmPointerInfo amPointerInfo(NULL, NULL, NULL, 0, acc, 0, 0);
-#else
+//#if (__hcc_workweek__ >= 17332)
+//    hc::AmPointerInfo amPointerInfo(NULL, NULL, NULL, 0, acc, 0, 0);
+//#else
     hc::AmPointerInfo amPointerInfo(NULL, NULL, 0, acc, 0, 0);
-#endif
+//#endif
     am_status_t am_status = hc::am_memtracker_getinfo(&amPointerInfo, hostPtr);
 
     if(am_status == AM_SUCCESS){
@@ -1465,11 +1465,11 @@ hipError_t hipMemPtrGetInfo(void *ptr, size_t *size)
 
   if(ptr != nullptr && size != nullptr){
     hc::accelerator acc;
-#if (__hcc_workweek__ >= 17332)
-    hc::AmPointerInfo amPointerInfo(NULL, NULL, NULL, 0, acc, 0, 0);
-#else
+//#if (__hcc_workweek__ >= 17332)
+//    hc::AmPointerInfo amPointerInfo(NULL, NULL, NULL, 0, acc, 0, 0);
+//#else
     hc::AmPointerInfo amPointerInfo(NULL, NULL, 0, acc, 0, 0);
-#endif
+//#endif
     am_status_t status = hc::am_memtracker_getinfo(&amPointerInfo, ptr);
     if(status == AM_SUCCESS){
       *size = amPointerInfo._sizeBytes;
@@ -1494,11 +1494,11 @@ hipError_t hipFree(void* ptr)
 #ifdef DGPU
     if (ptr) {
         hc::accelerator acc;
-#if (__hcc_workweek__ >= 17332)
-        hc::AmPointerInfo amPointerInfo(NULL, NULL, NULL, 0, acc, 0, 0);
-#else
+//#if (__hcc_workweek__ >= 17332)
+//        hc::AmPointerInfo amPointerInfo(NULL, NULL, NULL, 0, acc, 0, 0);
+//#else
         hc::AmPointerInfo amPointerInfo(NULL, NULL, 0, acc, 0, 0);
-#endif
+//#endif
         am_status_t status = hc::am_memtracker_getinfo(&amPointerInfo, ptr);
         if(status == AM_SUCCESS){
             if(amPointerInfo._hostPointer == NULL){
@@ -1534,11 +1534,11 @@ hipError_t hipHostFree(void* ptr)
 #ifdef DGPU
     if (ptr) {
         hc::accelerator acc;
-#if (__hcc_workweek__ >= 17332)
-        hc::AmPointerInfo amPointerInfo(NULL, NULL, NULL, 0, acc, 0, 0);
-#else
+//#if (__hcc_workweek__ >= 17332)
+//        hc::AmPointerInfo amPointerInfo(NULL, NULL, NULL, 0, acc, 0, 0);
+//#else
         hc::AmPointerInfo amPointerInfo(NULL, NULL, 0, acc, 0, 0);
-#endif
+//#endif
         am_status_t status = hc::am_memtracker_getinfo(&amPointerInfo, ptr);
         if(status == AM_SUCCESS){
             if(amPointerInfo._hostPointer == ptr){
@@ -1580,11 +1580,11 @@ hipError_t hipFreeArray(hipArray* array)
 
     if(array->data) {
         hc::accelerator acc;
-#if (__hcc_workweek__ >= 17332)
-        hc::AmPointerInfo amPointerInfo(NULL, NULL, NULL, 0, acc, 0, 0);
-#else
+//#if (__hcc_workweek__ >= 17332)
+//        hc::AmPointerInfo amPointerInfo(NULL, NULL, NULL, 0, acc, 0, 0);
+//#else
         hc::AmPointerInfo amPointerInfo(NULL, NULL, 0, acc, 0, 0);
-#endif
+//#endif
         am_status_t status = hc::am_memtracker_getinfo(&amPointerInfo, array->data);
         if(status == AM_SUCCESS){
             if(amPointerInfo._hostPointer == NULL){
@@ -1609,11 +1609,11 @@ hipError_t hipMemGetAddressRange ( hipDeviceptr_t* pbase, size_t* psize, hipDevi
     HIP_INIT_API ( pbase , psize , dptr );
     hipError_t hipStatus = hipSuccess;
     hc::accelerator acc;
-#if (__hcc_workweek__ >= 17332)
-    hc::AmPointerInfo amPointerInfo( NULL , NULL , NULL, 0 , acc , 0 , 0 );
-#else
+//#if (__hcc_workweek__ >= 17332)
+//    hc::AmPointerInfo amPointerInfo( NULL , NULL , NULL, 0 , acc , 0 , 0 );
+//#else
     hc::AmPointerInfo amPointerInfo( NULL , NULL, 0 , acc , 0 , 0 );
-#endif
+//#endif
     am_status_t status = hc::am_memtracker_getinfo( &amPointerInfo , dptr );
     if (status == AM_SUCCESS) {
         *pbase = amPointerInfo._devicePointer;
@@ -1636,11 +1636,11 @@ hipError_t hipIpcGetMemHandle(hipIpcMemHandle_t* handle, void* devPtr){
     if((handle == NULL) || (devPtr == NULL)) {
         hipStatus = hipErrorInvalidResourceHandle;
     } else {
-#if (__hcc_workweek__ >= 17332)
-        hc::AmPointerInfo amPointerInfo( NULL , NULL , NULL, 0 , acc , 0 , 0 );
-#else
+//#if (__hcc_workweek__ >= 17332)
+//        hc::AmPointerInfo amPointerInfo( NULL , NULL , NULL, 0 , acc , 0 , 0 );
+//#else
         hc::AmPointerInfo amPointerInfo( NULL , NULL , 0 , acc , 0 , 0 );
-#endif
+//#endif
         am_status_t status = hc::am_memtracker_getinfo( &amPointerInfo , devPtr );
         if (status == AM_SUCCESS) {
             psize = (size_t)amPointerInfo._sizeBytes;

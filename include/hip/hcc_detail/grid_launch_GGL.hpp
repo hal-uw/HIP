@@ -89,7 +89,7 @@ namespace hip_impl
         dim3 dim_blocks,
         int group_mem_bytes,
         const hc::accelerator_view& acc_v,
-        K k)
+        K k, uint32_t lastKernel = 1)
     {
         const auto d = hc::extent<3>{
             num_blocks.z * dim_blocks.z,
@@ -101,7 +101,7 @@ namespace hip_impl
             group_mem_bytes);
 
         try {
-            hc::parallel_for_each(acc_v, d, k);
+            hc::parallel_for_each(acc_v, d, k, lastKernel);
         }
         catch (std::exception& ex) {
             std::cerr << "Failed in " << __func__ << ", with exception: "
@@ -127,7 +127,7 @@ namespace hip_impl
         int group_mem_bytes,
         hipStream_t stream,
         const char* kernel_name,
-        K k)
+        K k, uint32_t lastKernel = 1)
     {
         void* lck_stream = nullptr;
         auto acc_v = lock_stream_hip_(stream, lck_stream);
@@ -149,7 +149,7 @@ namespace hip_impl
                 std::move(dim_blocks),
                 group_mem_bytes,
                 acc_v,
-                std::move(k));
+                std::move(k), lastKernel);
         }
         catch (std::exception& ex) {
             std::cerr << "Failed in " << __func__ << ", with exception: "
@@ -167,7 +167,7 @@ namespace hip_impl
         dim3 dim_blocks,
         int group_mem_bytes,
         hipStream_t stream,
-        K k)
+        K k, uint32_t lastKernel = 1)
     {
         grid_launch_hip_impl_(
             New_grid_launch_tag{},
@@ -175,7 +175,7 @@ namespace hip_impl
             std::move(dim_blocks),
             group_mem_bytes,
             std::move(stream),
-            std::move(k));
+            std::move(k), lastKernel);
     }
 
     template<FunctionalProcedure K, typename... Ts>
@@ -188,7 +188,7 @@ namespace hip_impl
         int group_mem_bytes,
         hipStream_t stream,
         const char* kernel_name,
-        K k)
+        K k, uint32_t lastKernel = 1)
     {
         grid_launch_hip_impl_(
             New_grid_launch_tag{},
@@ -197,7 +197,7 @@ namespace hip_impl
             group_mem_bytes,
             std::move(stream),
             kernel_name,
-            std::move(k));
+            std::move(k), lastKernel);
     }
 
     template<FunctionalProcedure K, typename... Ts>
@@ -209,7 +209,7 @@ namespace hip_impl
         int group_mem_bytes,
         hipStream_t stream,
         const char* kernel_name,
-        K k)
+        K k, uint32_t lastKernel = 1)
     {
         grid_launch_hip_impl_(
             is_new_grid_launch_t<K, Ts...>{},
@@ -218,7 +218,7 @@ namespace hip_impl
             group_mem_bytes,
             std::move(stream),
             kernel_name,
-            std::move(k));
+            std::move(k), lastKernel);
     }
 
     template<FunctionalProcedure K, typename... Ts>
@@ -229,7 +229,7 @@ namespace hip_impl
         dim3 dim_blocks,
         int group_mem_bytes,
         hipStream_t stream,
-        K k)
+        K k, uint32_t lastKernel = 1)
     {
         grid_launch_hip_impl_(
             is_new_grid_launch_t<K, Ts...>{},
@@ -237,7 +237,7 @@ namespace hip_impl
             std::move(dim_blocks),
             group_mem_bytes,
             std::move(stream),
-            std::move(k));
+            std::move(k), lastKernel);
     }
 
     // TODO: these are temporary and purposefully noisy and disruptive.
@@ -965,6 +965,7 @@ namespace hip_impl
     dim_blocks,\
     group_mem_bytes,\
     stream,\
+    lastKernel,\
     ...)\
 	do {\
         make_kernel_functor_hip_(function_name, kernel_name, __VA_ARGS__)\
@@ -975,11 +976,12 @@ namespace hip_impl
 		    group_mem_bytes,\
 		    stream,\
 		    #kernel_name,\
-			hip_kernel_functor_impl_);\
+			hip_kernel_functor_impl_,\
+            lastKernel);\
     } while(0)
 
     #define hipLaunchKernelGGL(\
-        kernel_name, num_blocks, dim_blocks, group_mem_bytes, stream, ...)\
+        kernel_name, num_blocks, dim_blocks, group_mem_bytes, stream, lastKernel, ...)\
 	do {\
 	    hipLaunchNamedKernelGGL(\
 		    unnamed,\
@@ -988,11 +990,12 @@ namespace hip_impl
 		    dim_blocks,\
 		    group_mem_bytes,\
 		    stream,\
+            lastKernel,\
 		    ##__VA_ARGS__);\
 	} while (0)
 
     #define hipLaunchKernel(\
-        kernel_name, num_blocks, dim_blocks, group_mem_bytes, stream, ...)\
+        kernel_name, num_blocks, dim_blocks, group_mem_bytes, stream, lastKernel, ...)\
 	do {\
 	    hipLaunchKernelGGL(\
 		    kernel_name,\
@@ -1000,6 +1003,7 @@ namespace hip_impl
 		    dim_blocks,\
 		    group_mem_bytes,\
 		    stream,\
+            lastKernel,\
 		    hipLaunchParm{},\
 		    ##__VA_ARGS__);\
 	} while(0)

@@ -368,7 +368,7 @@ hipError_t ihipModuleLaunchKernel(hipFunction_t f,
                                   uint32_t localWorkSizeX, uint32_t localWorkSizeY, uint32_t localWorkSizeZ,
                                   size_t sharedMemBytes, hipStream_t hStream,
                                   void **kernelParams, void **extra,
-                                  hipEvent_t startEvent, hipEvent_t stopEvent)
+                                  hipEvent_t startEvent, hipEvent_t stopEvent, uint32_t lastKernel = 1)
 {
 
     auto ctx = ihipGetTlsDefaultCtx();
@@ -452,9 +452,9 @@ hipError_t ihipModuleLaunchKernel(hipFunction_t f,
 
         lp.av->dispatch_hsa_kernel(&aql, config[1] /* kernarg*/, kernArgSize, 
                                   (startEvent || stopEvent) ? &cf : nullptr
-#if (__hcc_workweek__ > 17312)
-                                  , f->_name.c_str()
-#endif
+//#if (__hcc_workweek__ > 17312)
+//                                  , f->_name.c_str()
+//#endif
                                   );
 
 
@@ -480,7 +480,7 @@ hipError_t hipModuleLaunchKernel(hipFunction_t f,
             uint32_t gridDimX, uint32_t gridDimY, uint32_t gridDimZ,
             uint32_t blockDimX, uint32_t blockDimY, uint32_t blockDimZ,
             uint32_t sharedMemBytes, hipStream_t hStream,
-            void **kernelParams, void **extra)
+            void **kernelParams, void **extra, uint32_t lastKernel = 1)
 {
     HIP_INIT_API(f, gridDimX, gridDimY, gridDimZ,
                  blockDimX, blockDimY, blockDimZ,
@@ -490,7 +490,7 @@ hipError_t hipModuleLaunchKernel(hipFunction_t f,
                 blockDimX * gridDimX, blockDimY * gridDimY, gridDimZ * blockDimZ,
                 blockDimX, blockDimY, blockDimZ,
                 sharedMemBytes, hStream, kernelParams, extra,
-                nullptr, nullptr));
+                nullptr, nullptr, lastKernel));
 }
 
 
@@ -499,7 +499,7 @@ hipError_t hipHccModuleLaunchKernel(hipFunction_t f,
             uint32_t localWorkSizeX, uint32_t localWorkSizeY, uint32_t localWorkSizeZ,
             size_t sharedMemBytes, hipStream_t hStream,
             void **kernelParams, void **extra,
-            hipEvent_t startEvent, hipEvent_t stopEvent)
+            hipEvent_t startEvent, hipEvent_t stopEvent, uint32_t lastKernel = 1)
 {
     HIP_INIT_API(f, globalWorkSizeX, globalWorkSizeY, globalWorkSizeZ,
                  localWorkSizeX, localWorkSizeY, localWorkSizeZ,
@@ -507,7 +507,7 @@ hipError_t hipHccModuleLaunchKernel(hipFunction_t f,
                  kernelParams, extra);
     return ihipLogStatus(ihipModuleLaunchKernel(f, globalWorkSizeX, globalWorkSizeY, globalWorkSizeZ,
                 localWorkSizeX, localWorkSizeY, localWorkSizeZ,
-                sharedMemBytes, hStream, kernelParams, extra, startEvent, stopEvent));
+                sharedMemBytes, hStream, kernelParams, extra, startEvent, stopEvent, lastKernel));
 }
 
 hipError_t hipModuleGetGlobal(hipDeviceptr_t *dptr, size_t *bytes,
