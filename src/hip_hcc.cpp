@@ -95,23 +95,23 @@ int HIP_FORCE_NULL_STREAM=0;
 
 
 
-#if (__hcc_workweek__ >= 17300)
+//#if (__hcc_workweek__ >= 17300)
 // Make sure we have required bug fix in HCC
 // Perform resolution on the GPU:
 // Chicken bit to sync on host to implement null stream.
 // If 0, null stream synchronization is performed on the GPU
-int HIP_SYNC_NULL_STREAM = 0;
-#else
+//int HIP_SYNC_NULL_STREAM = 0;
+//#else
 int HIP_SYNC_NULL_STREAM = 1;
-#endif
+//#endif
 
 // HIP needs to change some behavior based on HCC_OPT_FLUSH :
-#if (__hcc_workweek__ >= 17296)
-int HCC_OPT_FLUSH = 1;
-#else
-#warning "HIP disabled HCC_OPT_FLUSH since HCC version does not yet support"
+//#if (__hcc_workweek__ >= 17296)
+//int HCC_OPT_FLUSH = 1;
+//#else
+//#warning "HIP disabled HCC_OPT_FLUSH since HCC version does not yet support"
 int HCC_OPT_FLUSH = 0;
-#endif
+//#endif
 
 
 

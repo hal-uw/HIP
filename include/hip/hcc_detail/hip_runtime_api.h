@@ -580,6 +580,43 @@ hipError_t hipStreamCreateWithFlags(hipStream_t *stream, unsigned int flags);
 
 
 /**
+ * @brief Create an asynchronous stream with the specified priority.
+ *
+ * @param[in, out] stream Pointer to new stream
+ * @param[in ] flags to control stream creation.
+ * @param[in ] priority of the stream. Lower numbers represent higher priorities.
+ * @return #hipSuccess, #hipErrorInvalidValue
+ *
+ * Create a new asynchronous stream with the specified priority.  @p stream returns an opaque handle
+ * that can be used to reference the newly created stream in subsequent hipStream* commands.  The
+ * stream is allocated on the heap and will remain allocated even if the handle goes out-of-scope.
+ * To release the memory used by the stream, applicaiton must call hipStreamDestroy. Flags controls
+ * behavior of the stream.  See #hipStreamDefault, #hipStreamNonBlocking.
+ *
+ *
+ * @see hipStreamCreate, hipStreamSynchronize, hipStreamWaitEvent, hipStreamDestroy
+ */
+
+hipError_t hipStreamCreateWithPriority(hipStream_t* stream, unsigned int flags, int priority);
+
+/**
+ * @brief Returns numerical values that correspond to the least and greatest stream priority.
+ *
+ * @param[in, out] leastPriority pointer in which value corresponding to least priority is returned.
+ * @param[in, out] greatestPriority pointer in which value corresponding to greatest priority is returned.
+ *
+ * Returns in *leastPriority and *greatestPriority the numerical values that correspond to the least
+ * and greatest stream priority respectively. Stream priorities follow a convention where lower numbers
+ * imply greater priorities. The range of meaningful stream priorities is given by
+ * [*greatestPriority, *leastPriority]. If the user attempts to create a stream with a priority value
+ * that is outside the the meaningful range as specified by this API, the priority is automatically
+ * clamped to within the valid range.
+ */
+
+hipError_t hipDeviceGetStreamPriorityRange(int* leastPriority, int* greatestPriority);
+
+
+/**
  * @brief Destroys the specified stream.
  *
  * @param[in, out] stream Valid pointer to hipStream_t.  This function writes the memory with the newly created stream.
@@ -668,6 +705,21 @@ hipError_t hipStreamWaitEvent(hipStream_t stream, hipEvent_t event, unsigned int
  * @see hipStreamCreateWithFlags
  */
 hipError_t hipStreamGetFlags(hipStream_t stream, unsigned int *flags);
+
+/**
+ * @brief Query the priority of a stream.
+ *
+ * @param[in] stream stream to be queried
+ * @param[in,out] priority Pointer to an unsigned integer in which the stream's priority is returned
+ * @return #hipSuccess, #hipErrorInvalidValue, #hipErrorInvalidResourceHandle
+ *
+ * @returns #hipSuccess #hipErrorInvalidValue #hipErrorInvalidResourceHandle
+ *
+ * Query the priority of a stream. The priority is returned in in priority.
+ *
+ * @see hipStreamCreateWithFlags
+ */
+hipError_t hipStreamGetPriority(hipStream_t stream, int* priority);
 
 /**
  * Stream CallBack struct

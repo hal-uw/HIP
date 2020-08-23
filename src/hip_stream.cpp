@@ -29,9 +29,15 @@ THE SOFTWARE.
 //-------------------------------------------------------------------------------------------------
 // Stream
 //
+enum queue_priority
+{
+    priority_high = Kalmar::priority_high,
+    priority_normal = Kalmar::priority_normal,
+    priority_low = Kalmar::priority_low
+};
 
 //---
-hipError_t ihipStreamCreate(hipStream_t *stream, unsigned int flags)
+hipError_t ihipStreamCreate(hipStream_t *stream, unsigned int flags, int priority)
 {
     ihipCtx_t *ctx = ihipGetTlsDefaultCtx();
 
@@ -53,7 +59,7 @@ hipError_t ihipStreamCreate(hipStream_t *stream, unsigned int flags)
                 // Obtain mutex access to the device critical data, release by destructor
                 LockedAccessor_CtxCrit_t  ctxCrit(ctx->criticalData());
 
-                auto istream = new ihipStream_t(ctx, acc.create_view(), flags);
+                auto istream = new ihipStream_t(ctx, acc.create_view(Kalmar::execute_in_order, Kalmar::queuing_mode_automatic, (Kalmar::queue_priority)priority), flags);
 
                 ctxCrit->addStream(istream);
                 *stream = istream;
@@ -74,7 +80,7 @@ hipError_t hipStreamCreateWithFlags(hipStream_t *stream, unsigned int flags)
 {
     HIP_INIT_API(stream, flags);
 
-    return ihipLogStatus(ihipStreamCreate(stream, flags));
+    return ihipLogStatus(ihipStreamCreate(stream, flags, priority_normal));
 
 }
 
@@ -83,9 +89,25 @@ hipError_t hipStreamCreate(hipStream_t *stream)
 {
     HIP_INIT_API(stream);
 
-    return ihipLogStatus(ihipStreamCreate(stream, hipStreamDefault));
+    return ihipLogStatus(ihipStreamCreate(stream, hipStreamDefault, priority_normal));
 }
 
+//---
+hipError_t hipStreamCreateWithPriority(hipStream_t* stream, unsigned int flags, int priority) {
+    HIP_INIT_API(hipStreamCreateWithPriority, stream, flags, priority);
+
+    // clamp priority to range [priority_high:priority_low]
+    priority = (priority < priority_high ? priority_high : (priority > priority_low ? priority_low : priority));
+    return ihipLogStatus(ihipStreamCreate(stream, flags, priority));
+}
+
+hipError_t hipDeviceGetStreamPriorityRange(int* leastPriority, int* greatestPriority) {
+    HIP_INIT_API(leastPriority, greatestPriority);
+
+    if (leastPriority != NULL) *leastPriority = priority_low;
+    if (greatestPriority != NULL) *greatestPriority = priority_high;
+    return ihipLogStatus(hipSuccess);
+}
 
 hipError_t hipStreamWaitEvent(hipStream_t stream, hipEvent_t event, unsigned int flags)
 {
@@ -206,6 +228,20 @@ hipError_t hipStreamGetFlags(hipStream_t stream, unsigned int *flags)
     }
 }
 
+//--
+hipError_t hipStreamGetPriority(hipStream_t stream, int* priority) {
+    HIP_INIT_API(stream, priority);
+
+    if (priority == NULL) {
+        return ihipLogStatus(hipErrorInvalidValue);
+    } else if (stream == hipStreamNull) {
+        return ihipLogStatus(hipErrorInvalidResourceHandle);
+    } else {
+        LockedAccessor_StreamCrit_t crit(stream->_criticalData);
+        *priority = crit->_av.get_queue_priority();
+        return ihipLogStatus(hipSuccess);
+    }
+}
 
 //---
 hipError_t hipStreamAddCallback(hipStream_t stream, hipStreamCallback_t callback, void *userData, unsigned int flags)
