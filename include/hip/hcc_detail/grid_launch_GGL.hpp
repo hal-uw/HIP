@@ -957,8 +957,7 @@ namespace hip_impl
     #define make_kernel_functor_hip_(...)\
         overload_macro_hip_(make_kernel_functor_hip_, __VA_ARGS__)
 
-
-    #define hipLaunchNamedKernelGGL(\
+    #define hipLaunchNamedKernelGGL_lk(\
     function_name,\
     kernel_name,\
     num_blocks,\
@@ -980,10 +979,10 @@ namespace hip_impl
             lastKernel);\
     } while(0)
 
-    #define hipLaunchKernelGGL(\
+    #define hipLaunchKernelGGL_lk(\
         kernel_name, num_blocks, dim_blocks, group_mem_bytes, stream, lastKernel, ...)\
 	do {\
-	    hipLaunchNamedKernelGGL(\
+	    hipLaunchNamedKernelGGL_lk(\
 		    unnamed,\
 		    kernel_name,\
 		    num_blocks,\
@@ -994,8 +993,57 @@ namespace hip_impl
 		    ##__VA_ARGS__);\
 	} while (0)
 
-    #define hipLaunchKernel(\
+    #define hipLaunchKernel_lk(\
         kernel_name, num_blocks, dim_blocks, group_mem_bytes, stream, lastKernel, ...)\
+	do {\
+	    hipLaunchKernelGGL_lk(\
+		    kernel_name,\
+		    num_blocks,\
+		    dim_blocks,\
+		    group_mem_bytes,\
+		    stream,\
+            lastKernel,\
+		    hipLaunchParm{},\
+		    ##__VA_ARGS__);\
+	} while(0)
+
+
+    #define hipLaunchNamedKernelGGL(\
+    function_name,\
+    kernel_name,\
+    num_blocks,\
+    dim_blocks,\
+    group_mem_bytes,\
+    stream,\
+    ...)\
+	do {\
+        make_kernel_functor_hip_(function_name, kernel_name, __VA_ARGS__)\
+            hip_kernel_functor_impl_{__VA_ARGS__};\
+	    hip_impl::grid_launch_hip_(\
+		    num_blocks,\
+		    dim_blocks,\
+		    group_mem_bytes,\
+		    stream,\
+		    #kernel_name,\
+			hip_kernel_functor_impl_,\
+            1);\
+    } while(0)
+
+    #define hipLaunchKernelGGL(\
+        kernel_name, num_blocks, dim_blocks, group_mem_bytes, stream, ...)\
+	do {\
+	    hipLaunchNamedKernelGGL(\
+		    unnamed,\
+		    kernel_name,\
+		    num_blocks,\
+		    dim_blocks,\
+		    group_mem_bytes,\
+		    stream,\
+		    ##__VA_ARGS__);\
+	} while (0)
+
+    #define hipLaunchKernel(\
+        kernel_name, num_blocks, dim_blocks, group_mem_bytes, stream, ...)\
 	do {\
 	    hipLaunchKernelGGL(\
 		    kernel_name,\
@@ -1003,7 +1051,6 @@ namespace hip_impl
 		    dim_blocks,\
 		    group_mem_bytes,\
 		    stream,\
-            lastKernel,\
 		    hipLaunchParm{},\
 		    ##__VA_ARGS__);\
 	} while(0)
