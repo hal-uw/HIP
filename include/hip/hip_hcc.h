@@ -94,7 +94,8 @@ hipError_t hipHccModuleLaunchKernel(hipFunction_t f,
                                     void **kernelParams,
                                     void **extra,
                                     hipEvent_t startEvent=nullptr,
-                                    hipEvent_t stopEvent=nullptr
+                                    hipEvent_t stopEvent=nullptr,
+                                    uint32_t lastKernel=1
                                     );
 
 // doxygen end HCC-specific features

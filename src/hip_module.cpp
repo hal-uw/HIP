@@ -499,7 +499,7 @@ hipError_t hipHccModuleLaunchKernel(hipFunction_t f,
             uint32_t localWorkSizeX, uint32_t localWorkSizeY, uint32_t localWorkSizeZ,
             size_t sharedMemBytes, hipStream_t hStream,
             void **kernelParams, void **extra,
-            hipEvent_t startEvent, hipEvent_t stopEvent, uint32_t lastKernel = 1)
+            hipEvent_t startEvent, hipEvent_t stopEvent, uint32_t lastKernel)
 {
     HIP_INIT_API(f, globalWorkSizeX, globalWorkSizeY, globalWorkSizeZ,
                  localWorkSizeX, localWorkSizeY, localWorkSizeZ,
