@@ -476,6 +476,20 @@ hipError_t ihipModuleLaunchKernel(hipFunction_t f,
     return ret;
 }
 
+hipError_t ihipModuleRingDoorbell(hipStream_t hStream)
+{
+    // Ripped from ihipPreLaunchKernel
+    hStream = ihipSyncAndResolveStream(hStream);
+    auto crit = hStream->lockopen_preKernelCommand();
+
+    crit->_av.ring_doorbell();
+
+    // Ripped from ihipPostLaunchKernel
+    hStream->lockclose_postKernelCommand("Kernel", &(crit->_av));
+
+    return hipSuccess;
+}
+
 hipError_t hipModuleLaunchKernel(hipFunction_t f,
             uint32_t gridDimX, uint32_t gridDimY, uint32_t gridDimZ,
             uint32_t blockDimX, uint32_t blockDimY, uint32_t blockDimZ,
@@ -508,6 +522,12 @@ hipError_t hipHccModuleLaunchKernel(hipFunction_t f,
     return ihipLogStatus(ihipModuleLaunchKernel(f, globalWorkSizeX, globalWorkSizeY, globalWorkSizeZ,
                 localWorkSizeX, localWorkSizeY, localWorkSizeZ,
                 sharedMemBytes, hStream, kernelParams, extra, startEvent, stopEvent, lastKernel));
+}
+
+hipError_t hipHccModuleRingDoorbell(hipStream_t hStream)
+{
+    HIP_INIT();
+    return ihipLogStatus(ihipModuleRingDoorbell(hStream));
 }
 
 hipError_t hipModuleGetGlobal(hipDeviceptr_t *dptr, size_t *bytes,

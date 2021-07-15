@@ -98,6 +98,8 @@ hipError_t hipHccModuleLaunchKernel(hipFunction_t f,
                                     uint32_t lastKernel=1
                                     );
 
+hipError_t hipHccModuleRingDoorbell(hipStream_t hStream);
+
 // doxygen end HCC-specific features
 /**
  * @}
