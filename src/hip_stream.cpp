@@ -37,7 +37,7 @@ enum queue_priority
 };
 
 //---
-hipError_t ihipStreamCreate(hipStream_t *stream, unsigned int flags, int priority)
+hipError_t ihipStreamCreate(hipStream_t *stream, unsigned int flags, int priority, uint64_t deadline)
 {
     ihipCtx_t *ctx = ihipGetTlsDefaultCtx();
 
@@ -59,7 +59,7 @@ hipError_t ihipStreamCreate(hipStream_t *stream, unsigned int flags, int priorit
                 // Obtain mutex access to the device critical data, release by destructor
                 LockedAccessor_CtxCrit_t  ctxCrit(ctx->criticalData());
 
-                auto istream = new ihipStream_t(ctx, acc.create_view(Kalmar::execute_in_order, Kalmar::queuing_mode_automatic, (Kalmar::queue_priority)priority), flags);
+                auto istream = new ihipStream_t(ctx, acc.create_view(Kalmar::execute_in_order, Kalmar::queuing_mode_automatic, (Kalmar::queue_priority)priority, deadline), flags);
 
                 ctxCrit->addStream(istream);
                 *stream = istream;
@@ -76,29 +76,29 @@ hipError_t ihipStreamCreate(hipStream_t *stream, unsigned int flags, int priorit
 
 
 //---
-hipError_t hipStreamCreateWithFlags(hipStream_t *stream, unsigned int flags)
+hipError_t hipStreamCreateWithFlags(hipStream_t *stream, unsigned int flags, uint64_t deadline)
 {
-    HIP_INIT_API(stream, flags);
+    HIP_INIT_API(stream, flags, deadline);
 
-    return ihipLogStatus(ihipStreamCreate(stream, flags, priority_normal));
+    return ihipLogStatus(ihipStreamCreate(stream, flags, priority_normal, deadline));
 
 }
 
 //---
-hipError_t hipStreamCreate(hipStream_t *stream)
+hipError_t hipStreamCreate(hipStream_t *stream, uint64_t deadline)
 {
-    HIP_INIT_API(stream);
+    HIP_INIT_API(stream, deadline);
 
-    return ihipLogStatus(ihipStreamCreate(stream, hipStreamDefault, priority_normal));
+    return ihipLogStatus(ihipStreamCreate(stream, hipStreamDefault, priority_normal, deadline));
 }
 
 //---
-hipError_t hipStreamCreateWithPriority(hipStream_t* stream, unsigned int flags, int priority) {
-    HIP_INIT_API(hipStreamCreateWithPriority, stream, flags, priority);
+hipError_t hipStreamCreateWithPriority(hipStream_t* stream, unsigned int flags, int priority, uint64_t deadline) {
+    HIP_INIT_API(stream, flags, priority, deadline);
 
     // clamp priority to range [priority_high:priority_low]
     priority = (priority < priority_high ? priority_high : (priority > priority_low ? priority_low : priority));
-    return ihipLogStatus(ihipStreamCreate(stream, flags, priority));
+    return ihipLogStatus(ihipStreamCreate(stream, flags, priority, deadline));
 }
 
 hipError_t hipDeviceGetStreamPriorityRange(int* leastPriority, int* greatestPriority) {

@@ -557,7 +557,7 @@ const char *hipGetErrorString(hipError_t hipError);
  *
  * @see hipStreamCreateWithFlags, hipStreamSynchronize, hipStreamWaitEvent, hipStreamDestroy
  */
-hipError_t hipStreamCreate(hipStream_t *stream);
+hipError_t hipStreamCreate(hipStream_t *stream, uint64_t deadline);
 
 
 /**
@@ -576,7 +576,7 @@ hipError_t hipStreamCreate(hipStream_t *stream);
  * @see hipStreamCreate, hipStreamSynchronize, hipStreamWaitEvent, hipStreamDestroy
  */
 
-hipError_t hipStreamCreateWithFlags(hipStream_t *stream, unsigned int flags);
+hipError_t hipStreamCreateWithFlags(hipStream_t *stream, unsigned int flags, uint64_t deadline);
 
 
 /**
@@ -597,7 +597,7 @@ hipError_t hipStreamCreateWithFlags(hipStream_t *stream, unsigned int flags);
  * @see hipStreamCreate, hipStreamSynchronize, hipStreamWaitEvent, hipStreamDestroy
  */
 
-hipError_t hipStreamCreateWithPriority(hipStream_t* stream, unsigned int flags, int priority);
+hipError_t hipStreamCreateWithPriority(hipStream_t* stream, unsigned int flags, uint64_t deadline, int priority);
 
 /**
  * @brief Returns numerical values that correspond to the least and greatest stream priority.
