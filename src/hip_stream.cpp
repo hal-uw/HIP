@@ -93,8 +93,8 @@ hipError_t hipStreamCreate(hipStream_t *stream, uint64_t deadline)
 }
 
 //---
-hipError_t hipStreamCreateWithPriority(hipStream_t* stream, unsigned int flags, int priority, uint64_t deadline) {
-    HIP_INIT_API(stream, flags, priority, deadline);
+hipError_t hipStreamCreateWithPriority(hipStream_t* stream, unsigned int flags, uint64_t deadline, int priority) {
+    HIP_INIT_API(stream, flags, deadline, priority);
 
     // clamp priority to range [priority_high:priority_low]
     priority = (priority < priority_high ? priority_high : (priority > priority_low ? priority_low : priority));
